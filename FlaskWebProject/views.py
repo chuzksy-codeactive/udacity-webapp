@@ -84,8 +84,10 @@ def login():
 @app.route(Config.REDIRECT_PATH)  # Its absolute URL must match your app's redirect_uri set in AAD
 def authorized():
     if request.args.get('state') != session.get("state"):
+        app.logger.info('Goes back to the index page')
         return redirect(url_for("home"))  # No-OP. Goes back to Index page
     if "error" in request.args:  # Authentication/Authorization failure
+        app.logger.error('Authentication/Authorization failure')
         return render_template("auth_error.html", result=request.args)
     if request.args.get('code'):
         cache = _load_cache()
@@ -95,6 +97,7 @@ def authorized():
             redirect_uri=url_for('authorized', _external=True, _scheme='https'))
         app.logger.info("user is authenticated")
         if "error" in result:
+            app.logger.error('Authentication/Authorization failure')
             return render_template("auth_error.html", result=result)
         session["user"] = result.get("id_token_claims")
         # Note: In a real app, we'd use the 'name' property from session["user"] below
@@ -111,7 +114,7 @@ def logout():
         # Wipe out user and its token cache from session
         session.clear()
         # Also logout from your tenant's web session
-        app.logger.info("User is logged out")
+        app.logger.info("logout from your tenant's web session")
         return redirect(
             Config.AUTHORITY + "/oauth2/v2.0/logout" +
             "?post_logout_redirect_uri=" + url_for("login", _external=True))
