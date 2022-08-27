@@ -22,3 +22,6 @@
 
 ### Assess app changes that would change your decision.
 - Only if many more features are added or demand changes in a way that requires vertical scaling
+
+### Project Url
+- https://chuzksyarticlewebapp.azurewebsites.net/

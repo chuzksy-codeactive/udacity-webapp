@@ -20,6 +20,9 @@ imageSourceUrl = 'https://'+ app.config['BLOB_ACCOUNT']  + '.blob.core.windows.n
 @app.route('/home')
 @login_required
 def home():
+    # Since the home page is hidden behind authentication
+    # Accessing this page, means u logged in successfully
+    app.logger.info('User logged in successfully')
     user = User.query.filter_by(username=current_user.username).first_or_404()
     posts = Post.query.all()
     return render_template(
@@ -62,7 +65,7 @@ def post(id):
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
-        app.logger.info("user is authenticated")
+        app.logger.warning('user is authenticated')
         return redirect(url_for('home'))
     form = LoginForm()
     if form.validate_on_submit():
@@ -76,9 +79,9 @@ def login():
         if not next_page or url_parse(next_page).netloc != '':
             next_page = url_for('home')
         return redirect(next_page)
+    app.logger.info("user is logged in successfully")
     session["state"] = str(uuid.uuid4())
     auth_url = _build_auth_url(scopes=Config.SCOPE, state=session["state"])
-    app.logger.info("user is logged in")
     return render_template('login.html', title='Sign In', form=form, auth_url=auth_url)
 
 @app.route(Config.REDIRECT_PATH)  # Its absolute URL must match your app's redirect_uri set in AAD
@@ -90,12 +93,12 @@ def authorized():
         app.logger.error('Authentication/Authorization failure')
         return render_template("auth_error.html", result=request.args)
     if request.args.get('code'):
+        app.logger.info("user is authenticated successfully")
         cache = _load_cache()
         result = _build_msal_app(cache=cache).acquire_token_by_authorization_code(
             request.args['code'],
             scopes=Config.SCOPE,
             redirect_uri=url_for('authorized', _external=True, _scheme='https'))
-        app.logger.info("user is authenticated")
         if "error" in result:
             app.logger.error('Authentication/Authorization failure')
             return render_template("auth_error.html", result=result)
@@ -105,6 +108,7 @@ def authorized():
         user = User.query.filter_by(username="admin").first()
         login_user(user)
         _save_cache(cache)
+    app.logger.info("user is authenticated successfully")
     return redirect(url_for('home'))
 
 @app.route('/logout')
@@ -114,11 +118,12 @@ def logout():
         # Wipe out user and its token cache from session
         session.clear()
         # Also logout from your tenant's web session
-        app.logger.info("logout from your tenant's web session")
+        app.logger.info('logout from your tenant web session')
         return redirect(
             Config.AUTHORITY + "/oauth2/v2.0/logout" +
             "?post_logout_redirect_uri=" + url_for("login", _external=True))
 
+    app.logger.info('logout from your tenant web session')
     return redirect(url_for('login'))
 
 def _load_cache():
