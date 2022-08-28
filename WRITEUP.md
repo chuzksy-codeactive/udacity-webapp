@@ -25,3 +25,10 @@
 
 ### Project Url
 - https://chuzksyarticlewebapp.azurewebsites.net/
+
+
+### Monitoring and Logging
+- For some reason, I can not seem to log an INFO of a successful log-in. I have configured and set it's level to INFO
+- Locally it logs as INFO. I attached a screenshot in the `example_images` directory
+- When deployed logs are being displayed as ERROR. I also attached a screenshot
+- I also attached a screenshot of an unsuccessful log-in in the `example_images` directory
